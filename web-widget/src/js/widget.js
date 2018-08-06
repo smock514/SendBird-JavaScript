@@ -335,7 +335,7 @@ class SBWidget {
             this.listBoard.list.removeChild(item);
             this.listBoard.checkEmptyList();
           } else {
-            this.listBoard.setChannelTitle(channel.url, this.sb.getNicknamesString(channel));
+            this.listBoard.setChannelTitle(channel.url, this.sb.getChannelNameString(channel));
             this.updateUnreadMessageCount(channel);
             let targetChatBoard = this.chatSection.getChatBoard(channel.url);
             if (targetChatBoard) {
@@ -344,7 +344,7 @@ class SBWidget {
           }
         },
         (channel, user) => {
-          this.listBoard.setChannelTitle(channel.url, this.sb.getNicknamesString(channel));
+          this.listBoard.setChannelTitle(channel.url, this.sb.getChannelNameString(channel));
           let targetChatBoard = this.chatSection.getChatBoard(channel.url);
           if (targetChatBoard) {
             this.updateChannelInfo(targetChatBoard, channel);
@@ -508,7 +508,7 @@ class SBWidget {
     let item = this.listBoard.createChannelItem(
       channel.url,
       channel.coverUrl,
-      this.sb.getNicknamesString(channel),
+      this.sb.getChannelNameString(channel),
       this.sb.getMessageTime(channel.lastMessage),
       this.sb.getLastMessage(channel),
       this.sb.getChannelUnreadCount(channel)
@@ -649,7 +649,7 @@ class SBWidget {
             this.sb.inviteMember(channelSet.channel, selectedUserIds, () => {
               this.spinner.remove(this.popup.invitePopup.inviteBtn);
               this.closeInvitePopup();
-              this.listBoard.setChannelTitle(channelSet.channel.url, this.sb.getNicknamesString(channelSet.channel));
+              this.listBoard.setChannelTitle(channelSet.channel.url, this.sb.getChannelNameString(channelSet.channel));
               this.updateChannelInfo(chatBoard, channelSet.channel);
             });
           }
@@ -679,7 +679,7 @@ class SBWidget {
   }
 
   updateChannelInfo(target, channel) {
-    this.chatSection.updateChatTop(target, this.sb.getMemberCount(channel), this.sb.getNicknamesString(channel));
+    this.chatSection.updateChatTop(target, this.sb.getMemberCount(channel), this.sb.getChannelNameString(channel));
   }
 
   updateUnreadMessageCount(channel) {

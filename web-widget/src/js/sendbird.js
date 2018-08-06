@@ -4,6 +4,8 @@ import { xssEscape } from './utils.js';
 const GLOBAL_HANDLER = 'GLOBAL_HANDLER';
 const GET_MESSAGE_LIMIT = 20;
 
+const https = require('https');
+
 class Sendbird {
   constructor(appId) {
     this.sb = new window.SendBird({ appId: appId });
@@ -22,18 +24,47 @@ class Sendbird {
   }
 
   connect(userId, nickname, action) {
-    this.sb.connect(userId.trim(), (user, error) => {
+    // Hit AWS to fetch SendBird user ID and token
+    this.connectSBUser(userId, action); 
+  }
+
+  connectSBUser(guid, action) {
+    var url = 'https://3kbkw5q6mc.execute-api.us-west-1.amazonaws.com/prod/users/' + guid;
+    console.log("SB URL: " + url);
+
+    https.get(url, (resp) => {
+      let data = '';
+ 
+      // A chunk of data has been recieved.
+      resp.on('data', (chunk) => {
+        data += chunk;
+        console.log('Data chunk received');
+      });
+ 
+      // The whole response has been received. Print out the result.
+      resp.on('end', () => {
+        console.log('Data ended!');
+        console.log(data);
+        console.log(JSON.parse(data).explanation);
+        let user_json = JSON.parse(data);
+        let userId = user_json.sendBirdUserId;
+        let userToken = user_json.sendBirdUserToken;
+        this.sendBirdConnect(userId, userToken, action);    
+      });
+ 
+    }).on("error", (err) => {
+      console.log("Error: " + err.message);
+    });
+  }
+
+  sendBirdConnect(userId, accessToken, action) {
+
+    this.sb.connect(userId.trim(), accessToken.trim(), (user, error) => {
       if (error) {
         console.error(error);
         return;
       }
-      this.sb.updateCurrentUserInfo(nickname.trim(), '', (response, error) => {
-        if (error) {
-          console.error(error);
-          return;
-        }
-        action();
-      });
+      action();
     });
   }
 
@@ -216,7 +247,11 @@ class Sendbird {
   /*
   Info
    */
-  getNicknamesString(channel) {
+  getChannelNameString(channel) {
+    if (channel.name) {
+      return xssEscape(channel.name);
+    }
+
     let nicknameList = [];
     let currentUserId = this.sb.currentUser.userId;
     channel.members.forEach(function(member) {
