@@ -2,6 +2,8 @@ import SendBird from 'sendbird';
 import { APP_ID as appId } from './const';
 import { isNull } from './utils';
 
+const https = require('https');
+
 let instance = null;
 
 class SendBirdAction {
@@ -23,19 +25,61 @@ class SendBirdAction {
    * Connect
    */
   connect(userId, nickname) {
+    return this.mapGuidToSBUser(userId).then(function(sbUserObj) {
+        return connectSBUser(sbUserObj);
+    }, function(error) {
+        console.error("Failed!", error);
+    });
+  }
+
+  mapGuidToSBUser(guid) {
+    return new Promise((resolve, reject) => {
+      var url = 'https://3kbkw5q6mc.execute-api.us-west-1.amazonaws.com/prod/users/' + guid;
+      console.log("SB URL: " + url);
+
+      https.get(url, (resp) => {
+        let data = '';
+
+        // A chunk of data has been recieved.
+        resp.on('data', (chunk) => {
+          data += chunk;
+          console.log('Data chunk received');
+        });
+
+        // The whole response has been received. Print out the result.
+        resp.on('end', () => {
+          console.log('Data ended!');
+          console.log(data);
+          console.log(JSON.parse(data).explanation);
+          let user_json = JSON.parse(data);
+          let userId = user_json.sendBirdUserId;
+          let userToken = user_json.sendBirdUserToken;
+          resolve({'userId': userId, 'userToken': userToken});
+        });
+      }).on("error", (err) => {
+        console.log("Error: " + err.message);
+        reject(err);
+      });
+    });
+  }
+
+  connectSBUser(sbUserObj) {
+    let userId = sbUserObj.userId;
+    let userToken = sbUserObj.userToken;
+    console.log("Connect for " + userId + " " + userToken);
+
     return new Promise((resolve, reject) => {
       const sb = SendBird.getInstance();
-      sb.connect(userId, (user, error) => {
+      sb.connect(userId, userToken, (user, error) => {
         if (error) {
           reject(error);
         } else {
-          sb.updateCurrentUserInfo(decodeURIComponent(nickname), null, (user, error) => {
-            error ? reject(error) : resolve(user);
-          });
+          resolve(user);
         }
       });
     });
   }
+
 
   disconnect() {
     return new Promise((resolve, reject) => {
