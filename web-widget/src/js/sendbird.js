@@ -29,7 +29,14 @@ class Sendbird {
   }
 
   connectSBUser(guid, action) {
-    var url = 'https://3kbkw5q6mc.execute-api.us-west-1.amazonaws.com/prod/users/' + guid;
+    let source = 'chat-v1';
+
+    var url;
+    if (source == 'chat-v1') {
+      url = 'https://howeverclever-corp-ne1-4080.sslproxy.media.yahoo.com/chat/v1/users/' + guid;
+    } else if (source == 'aws') {
+      url = 'https://3kbkw5q6mc.execute-api.us-west-1.amazonaws.com/prod/users/' + guid;
+    }
     console.log("SB URL: " + url);
 
     https.get(url, (resp) => {
@@ -47,8 +54,16 @@ class Sendbird {
         console.log(data);
         console.log(JSON.parse(data).explanation);
         let user_json = JSON.parse(data);
-        let userId = user_json.sendBirdUserId;
-        let userToken = user_json.sendBirdUserToken;
+
+        var userId, userToken;
+
+        if (source == 'chat-v1') {
+          userId = user_json.service.externalUser.userId;
+          userToken = user_json.service.externalUser.accessToken.token;
+        } else if (source == 'aws') {
+          userId = user_json.sendBirdUserId;
+          userToken = user_json.sendBirdUserToken;
+        }
         this.sendBirdConnect(userId, userToken, action);    
       });
  
