@@ -33,7 +33,7 @@ class Sendbird {
 
     var url;
     if (source == 'chat-v1') {
-      url = 'https://howeverclever-corp-ne1-4080.sslproxy.media.yahoo.com/chat/v1/users/' + guid;
+      url = 'https://pub-api.fantasysports.yahoo.com/chat/v1/admin/users/' + guid;
     } else if (source == 'aws') {
       url = 'https://3kbkw5q6mc.execute-api.us-west-1.amazonaws.com/prod/users/' + guid;
     }
@@ -55,16 +55,18 @@ class Sendbird {
         console.log(JSON.parse(data).explanation);
         let user_json = JSON.parse(data);
 
-        var userId, userToken;
+        var userId, userToken, userAppId;
 
         if (source == 'chat-v1') {
           userId = user_json.service.externalUser.userId;
           userToken = user_json.service.externalUser.accessToken.token;
+          userAppId = user_json.service.externalUser.appId;
         } else if (source == 'aws') {
           userId = user_json.sendBirdUserId;
           userToken = user_json.sendBirdUserToken;
+          userAppId = null;
         }
-        this.sendBirdConnect(userId, userToken, action);    
+        this.sendBirdConnect(userId, userToken, userAppId, action);    
       });
  
     }).on("error", (err) => {
@@ -72,7 +74,9 @@ class Sendbird {
     });
   }
 
-  sendBirdConnect(userId, accessToken, action) {
+  sendBirdConnect(userId, accessToken, userAppId, action) {
+
+    // Need to check to see if the app ID has changed
 
     this.sb.connect(userId.trim(), accessToken.trim(), (user, error) => {
       if (error) {
